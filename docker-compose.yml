@@ -1,0 +1,18 @@
+app:
+  image: clojure
+  links:
+    - redis
+  volumes:
+    - ./:/app
+    - ~/.m2:/root/.m2
+  working_dir: /app
+  command: lein run
+
+redis:
+  image: redis
+
+redis-cli:
+  image: redis
+  links:
+    - redis
+  command: redis-cli -h redis
