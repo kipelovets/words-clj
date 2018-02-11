@@ -1,7 +1,11 @@
 (ns words.storage
   (:require [taoensso.carmine :as car :refer (wcar)]))
 
-(def server1-conn {:pool {} :spec {:host "redis" :port 6379}}) ; See `wcar` docstring for opts
+; User {:id int, :state State, :exercise [string], :word string}
+; States: :word, :translation, :exercise
+; Word {:translation string, :strength int, :updated date}
+
+(def server1-conn {:pool {} :spec {:host "redis" :port 6379}})
 (defmacro wcar* [& body] `(car/wcar server1-conn ~@body))
 
 ; Keys
@@ -14,12 +18,12 @@
 
 ; Internal
 
-(defn- unpack [u]
+(defn- keyword-keys [u]
   (zipmap (map keyword (keys u)) (vals u)))
 
 ; User
 (defn get-user [id]
-  (unpack (wcar* (car/hgetall* (user-key id)))))
+  (keyword-keys (wcar* (car/hgetall* (user-key id)))))
 
 (defn set-user [id, user]
   (wcar*

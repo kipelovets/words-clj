@@ -1,10 +1,3 @@
-;(ns words.core
-;  (:gen-class))
-;(defn -main
-;  "I don't do a whole lot ... yet."
-;  [& args]
-;  (println "Hello, World!"))
-
 (ns words.core
   (:require [morse.handlers :as h]
             [morse.api :as t]
@@ -24,11 +17,7 @@
 (defn welcome-add-word [id]
   (t/send-text token id (str "Send a new word to train")))
 
-; This will define bot-api function, which later could be
-; used to start your bot
 (h/defhandler bot-api
-              ; Each bot has to handle /start and /help commands.
-              ; This could be done in form of a function:
               (h/command-fn "start" (fn [{{id :id :as chat} :chat}]
                                       (c/log (str "Bot joined new chat: " chat))
                                       (u/add-user id)
@@ -36,8 +25,6 @@
                                       (welcome-add-word id)
                                       ))
 
-              ; You can use short syntax for same purposes
-              ; Destructuring works same way as in function above
               (h/command "help" {{id :id :as chat} :chat}
                          (c/log (str "Help was requested in " chat))
                          (let [message (u/desc-state id)]
@@ -53,14 +40,6 @@
                            (t/send-text token id (str "Exercise started, words to go: " (count exercise) ))
                            (welcome-next-exercise-word id first-word)))
 
-
-              ; Handlers will be applied until there are any of those
-              ; returns non-nil result processing update.
-
-              ; Note that sending stuff to the user returns non-nil
-              ; response from Telegram API.
-
-              ; So match-all catch-through case would look something like this:
               (h/message {{id :id :as chat} :chat text :text :as message}
                          (c/log (str "Intercepted message:" message))
                          (let [current-state (:state (storage/get-user id))
@@ -78,7 +57,10 @@
 (defn -main []
   (c/log "Hello")
   (def channel (p/start token bot-api {:timeout 65536}))
+
+  ; TODO: make the Telegram thread non-background instead
   (doall (repeatedly 1000 (fn [] (c/log "Sleeping") (Thread/sleep 60000))))
+
   (c/log "Bye"))
 
 

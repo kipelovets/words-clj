@@ -1,11 +1,6 @@
 (ns words.users
-  (:require [words.common :as c]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [words.storage :as storage]))
-
-; User {:id int, :state State, :words [:word Word], :exercise [string], :word string}
-; States: :word, :translation, :exercise
-; Word {:translation string, :strength int, :updated date}
 
 (def max-strength 5)
 (def exercise-length 5)
@@ -69,6 +64,6 @@
                          (count (:exercise user))
                          ". Waiting for translation for: "
                          (first (:exercise user)))
-      (str "Unknown state" state))))
+      (str "Unknown state: " state))))
 
 
