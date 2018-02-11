@@ -11,9 +11,12 @@
             [morse.polling :as p]
             [words.common :as c]
             [words.users :as u]
-            [words.storage :as storage]))
+            [words.storage :as storage])
+  (:use [environ.core]))
 
-(def token "482017748:AAGUS5ENn2XCb5U9W3ks7_3-lYeCVLZeBhE")
+(def token (env :telegram-token))
+
+(c/log (str "Telegram token: " token))
 
 (defn welcome-next-exercise-word [id word]
   (t/send-text token id (str "Your next word for translation: *" word "*")))
@@ -75,7 +78,6 @@
 (defn -main []
   (c/log "Hello")
   (def channel (p/start token bot-api {:timeout 65536}))
-  ;(Thread/sleep 65536)
   (doall (repeatedly 1000 (fn [] (c/log "Sleeping") (Thread/sleep 60000))))
   (c/log "Bye"))
 
