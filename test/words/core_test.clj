@@ -3,5 +3,5 @@
             [words.core :refer :all]))
 
 (deftest a-test
-  (testing "FIXME, I fail."
+  (testing "FIXME, I do nothing."
     (is (= 1 1))))

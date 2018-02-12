@@ -39,8 +39,6 @@
 
     (is (= 5 (count ex)))
 
-    (prn "EXERCISE" ex)
-
     (loop [w ex]
       (is (exercise-answer 1 (get words (first w))))
       (if (< 1 (count w))
@@ -50,13 +48,5 @@
     (is (= "word" (:state (storage/get-user 1)))))
 
   (doall (map (fn [w]
-                (is (= 1 (:strength (storage/get-words 1))))) ex))
+                (is (= 1 (:strength (get (storage/get-words 1) w))))) ex))
   )
-
-
-;(deftest test-gen-exercise
-;  (testing "Words"
-;
-;    (prepare-user)
-;
-;    (is (= 2 (count (:words (get-user 1)))))))

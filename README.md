@@ -9,3 +9,9 @@ Word trainer Telegram bot in Clojure
 ## Usage
 
 `make`
+
+## TODO
+
+* Fetch translations from a dictionary
+* Buttons: start exercise, my stats
+* Word groups

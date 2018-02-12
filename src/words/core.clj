@@ -4,7 +4,8 @@
             [morse.polling :as p]
             [words.common :as c]
             [words.users :as u]
-            [words.storage :as storage])
+            [words.storage :as storage]
+            [words.lingvo :as lingvo])
   (:use [environ.core]))
 
 (def token (env :telegram-token))
@@ -44,7 +45,9 @@
                          (c/log (str "Intercepted message:" message))
                          (let [current-state (:state (storage/get-user id))
                                reply-text (case current-state
-                                            "word" (do (u/start-adding-word id text) "Now send translation")
+                                            "word" (do
+                                                     (u/start-adding-word id text)
+                                                     (str "Possible translations: " (lingvo/translation text "pl" "ru") "\nNow send your selected translation"))
                                             "translation" (do (u/finish-adding-word id text) "Translation saved. What's the next word?")
                                             "exercise" (if (u/exercise-answer id text)
                                                         (str "Correct! " (if-let [next-word (u/exercise-next-word id)]

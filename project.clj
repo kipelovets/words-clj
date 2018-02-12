@@ -6,7 +6,10 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [morse "0.3.4"]
                  [com.taoensso/carmine "2.17.0"]
-                 [environ "1.1.0"]]
+                 [environ "1.1.0"]
+                 [org.clojure/data.json "0.2.6"]
+                 [clj-http "3.7.0"]
+                 [slingshot "0.12.2"]]
   :main ^:skip-aot words.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
