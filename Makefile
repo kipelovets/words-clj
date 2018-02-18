@@ -9,3 +9,7 @@ tests:
 
 redis-cli:
 	docker-compose run --rm redis-cli
+
+stop:
+	docker-compose stop app
+	docker-compose rm -f app

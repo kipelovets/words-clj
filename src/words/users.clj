@@ -3,11 +3,18 @@
             [words.storage :as storage]
             [words.storage.redis :as redis]))
 
+(def state-word "word")
+(def state-translation "translation")
+(def state-exercise "exercise")
+(def state-remove-word "remove-word")
+(def state-lang-from "lang-from")
+(def state-lang-to "lang-to")
+
 (def max-strength 5)
 (def exercise-length 5)
 
 (defn add-user [id]
-  (let [user {:id id :state "word" :language "pl-ru"}]
+  (let [user {:id id :state "lang-from" :language "pl-ru"}]
     (storage/set-user id user)))
 
 (defn get-user [id]
@@ -72,13 +79,16 @@
 (defn desc-state [id]
   (let [user (storage/get-user id)
         state (:state user)]
-    (case state
-      "word" "Waiting for a new word"
-      "translation" (str "Waiting for a translation for " (:word user))
-      "exercise" (str "You are in the middle of an exercise, words left: "
+    (condp = state
+      state-word "Waiting for a new word"
+      state-translation (str "Waiting for a translation for " (:word user))
+      state-exercise (str "You are in the middle of an exercise, words left: "
                       (count (:exercise user))
                       ". Waiting for translation for: "
                       (first (:exercise user)))
+      state-lang-from "You're selecting your native language"
+      state-lang-to "You're selecting the language you're learning"
+      state-remove-word "You're removing a word"
       (str "Unknown state: " state))))
 
 (defn reset [id]
@@ -93,6 +103,14 @@
 (defn finish-removing-word [id word]
   (let [word-params (storage/get-word id word)]
     (if word-params (do (storage/remove-word id word)
-                 (storage/set-user id {:state "word"}))
-             nil)))
+                        (storage/set-user id {:state "word"}))
+                    nil)))
 
+(defn set-lang-from [id lang]
+  (storage/set-user id {:lang-from lang :state state-lang-to}))
+
+(defn set-lang-to [id lang]
+  (storage/set-user id {:lang-to lang :state state-word}))
+
+(defn reset-langs [id]
+  (storage/set-user id {:state state-lang-from}))

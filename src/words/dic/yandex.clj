@@ -1,4 +1,4 @@
-(ns words.yandex
+(ns words.dic.yandex
   (:require [clojure.data.json :as json]
             [clj-http.client :as client])
   (:use [environ.core]

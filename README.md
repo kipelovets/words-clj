@@ -15,17 +15,27 @@ Word trainer Telegram bot in Clojure
 * Fetch translations from a dictionary
 * Buttons: start exercise, my stats
 * Remove word
+* Select from-to languages
 
 ## TODO
 
+* Fix show words if no words
 * Answer prompts for weak words
 * Check word exists
 * Lowercase
-* Word groups
 * API call cache
 
 ## Feature cut
 
-* Select from-to languages
+* Suggest normal form on adding word
 * Weakening words
 * Word tags
+
+## Dictionaries
+
+* Lingvo: variable format, describing web page
+* Yandex: only pl-ru
+* Pons: html in response
+* Oxford, Merriam, Cambridge: limited access, no Polish
+* Google: paid API
+* Glosbe: OK, no normalization
