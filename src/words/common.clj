@@ -1,3 +1,4 @@
-(ns words.common)
+(ns words.common
+  (:require [clojure.string :as str]))
 
-(defn log [msg] (println (str (.getId (Thread/currentThread)) ": " msg)) true)
+(defn log [& msgs] (println (str (.getId (Thread/currentThread)) ": " (str/join " " msgs))) true)

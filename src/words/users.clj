@@ -1,47 +1,62 @@
 (ns words.users
   (:require [clojure.string :as str]
-            [words.storage :as storage]))
+            [words.storage :as storage]
+            [words.storage.redis :as redis]))
 
 (def max-strength 5)
 (def exercise-length 5)
 
 (defn add-user [id]
-  (storage/set-user id {:id id})
-  (storage/set-user-param id :state :word))
+  (let [user {:id id :state "word" :language "pl-ru"}]
+    (storage/set-user id user)))
+
+(defn get-user [id]
+  (storage/get-user id))
 
 (defn start-adding-word [id, word]
-  (storage/set-user-param id :word word)
-  (storage/set-user-param id :state :translation))
+  (let [user (assoc (get-user id) :state "translation" :word word)]
+    (storage/set-user id user)))
 
 (defn finish-adding-word [id, translation]
-  (storage/set-word id (:word (storage/get-user id)) {:translation translation :strength 0})
-  (storage/set-user-param id :state :word))
+  (let [user (assoc (redis/fetch :user id) :state "word")
+        word (:word user)]
+    (redis/save :user id user)
+    (redis/save-rel :user id :word word {:translation translation :strength 0})
+    user))
+
+(defn- get-weak-words [id]
+  (let [words (storage/get-words id)]
+    (filter (fn [key] (< (Integer. (:strength (get words key))) max-strength)) (keys words))))
 
 (defn- generate-exercise [id]
-  (let [words (storage/get-words id)
-        weak-words (filter (fn [key] (< (:strength (get words key)) max-strength)) (keys words))]
+  (let [weak-words (get-weak-words id)]
     (take exercise-length (shuffle weak-words))))
 
 (defn start-exercise [id]
   (let [exercise-words (generate-exercise id)]
-    (storage/set-user-param id :exercise exercise-words)
-    (storage/set-user-param id :state :exercise)
+    (if (< 0 (count exercise-words))
+      (storage/set-user id {:exercise exercise-words :state "exercise" :points 0}))
     exercise-words))
 
 (defn exercise-answer [id, word]
   (let [user (storage/get-user id)
         exercise-words (:exercise user)
         exercise-word (first (:exercise user))
-        expected (:translation (storage/get-word id exercise-word))]
+        expected (:translation (storage/get-word id exercise-word))
+        exercise-rest (rest exercise-words)
+        points (Integer. (:points user))]
+    (storage/set-user id {:exercise exercise-rest})
+    (if (empty? exercise-rest)
+      (storage/set-user id {:state "word"}))
     (if (= expected word)
-      (do (storage/update-word id exercise-word (fn [w] (assoc w :strength (inc (:strength w)))))
-          (let [exercise-rest (rest exercise-words)]
-            (storage/set-user-param id :exercise exercise-rest)
-            (if (empty? exercise-rest)
-              (storage/set-user-param id :state :word))
-            true))
-      (do (prn "INCORRECT " expected " != " word " for " exercise-word)
-          false))))
+      (do
+        (storage/set-user id {:points points})
+        (storage/update-word id exercise-word {:strength (inc (Integer. (:strength (storage/get-word id exercise-word))))})
+        [true nil (first exercise-rest) points])
+      [false expected (first exercise-rest) nil])))
+
+(defn count-weak-words [id]
+  (count (get-weak-words id)))
 
 (defn exercise-next-word [id]
   (let [user (storage/get-user id)]
@@ -58,12 +73,26 @@
   (let [user (storage/get-user id)
         state (:state user)]
     (case state
-      "word"        "Waiting for a new word"
+      "word" "Waiting for a new word"
       "translation" (str "Waiting for a translation for " (:word user))
-      "exercise"    (str "You are in the middle of an exercise, words left: "
-                         (count (:exercise user))
-                         ". Waiting for translation for: "
-                         (first (:exercise user)))
+      "exercise" (str "You are in the middle of an exercise, words left: "
+                      (count (:exercise user))
+                      ". Waiting for translation for: "
+                      (first (:exercise user)))
       (str "Unknown state: " state))))
 
+(defn reset [id]
+  (storage/set-user id {:state "word"}))
+
+(defn stop-exercise [id]
+  (reset id))
+
+(defn start-removing-word [id]
+  (storage/set-user id {:state "remove-word"}))
+
+(defn finish-removing-word [id word]
+  (let [word-params (storage/get-word id word)]
+    (if word-params (do (storage/remove-word id word)
+                 (storage/set-user id {:state "word"}))
+             nil)))
 
