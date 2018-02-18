@@ -6,10 +6,10 @@
             [words.storage :as storage]
             [words.common :as c]))
 
-(def btn-en "🇺🇸 EN")
-(def btn-de "🇩🇪 DE")
-(def btn-ru "🇷🇺 RU")
-(def btn-pl "🇵🇱 PL")
+(def ^:private btn-en "🇺🇸 EN")
+(def ^:private btn-de "🇩🇪 DE")
+(def ^:private btn-ru "🇷🇺 RU")
+(def ^:private btn-pl "🇵🇱 PL")
 (def ^:private btn-show-words "📖 Show my words")
 (def ^:private btn-help "❓ Help")
 (def ^:private btn-exercise "📝 Start exercise")
@@ -19,10 +19,10 @@
 (def ^:private btn-lang "⚙️ Change languages")
 
 (def ^:private btns-langs [btn-en btn-de btn-ru btn-pl])
-(def btn-to-lang {btn-en "en"
-                  btn-de "de"
-                  btn-ru "ru"
-                  btn-pl "pl"})
+(def ^:private btn-to-lang {btn-en "en"
+                            btn-de "de"
+                            btn-ru "ru"
+                            btn-pl "pl"})
 
 (defn- prompt
   ([user] (prompt user nil))
@@ -59,18 +59,21 @@
   (reply "Oops, you're in unknown state"))
 
 (defmethod handle-message "word" [_ user-id message reply]
-  (let [user (users/start-adding-word user-id message)
-        translations (dic/translation message (:lang-to user) (:lang-from user))]
-    (reply (prompt user translations)
-           (buttons {:id (:id user) :state "translation" :translations translations}))))
+  (let [word (str/lower-case message)]
+    (if (storage/get-word user-id word)
+      (reply (str "Word '" word "' already exists, choose another"))
+      (let [user (users/start-adding-word user-id word)
+            translations (if-let [t (dic/translation word (:lang-to user) (:lang-from user))] t ["Nothing found"])]
+        (reply (prompt user translations)
+               (buttons {:id (:id user) :state "translation" :translations translations}))))))
 
 (defmethod handle-message "translation" [_ user-id message reply]
-  (let [user (users/finish-adding-word user-id message)]
-    (reply (str "Translation saved " (:word user) " -> " message))
+  (let [word (str/lower-case message)
+        user (users/finish-adding-word user-id word)]
+    (reply (str "Translation saved " (:word user) " -> " word))
     (reply (prompt user) (buttons {:state "translation-added" :id (:id user)}))))
 
 (defmethod handle-message "exercise" [_ user-id message reply]
-  (c/log "EX" user-id message)
   (let [[ok expected next-word points] (users/exercise-answer user-id message)]
     (let [user (storage/get-user user-id)
           next-prompt (if next-word
@@ -95,7 +98,9 @@
 
       (= message btn-help) (do (reply (users/desc-state user-id) (buttons {:id (:id user) :state "help"})))
 
-      (= message btn-show-words) (do (reply (users/desc-words user-id))
+      (= message btn-show-words) (do (reply (if-let [words-list (not-empty (users/desc-words user-id))]
+                                              words-list
+                                              "You have no words yet"))
                          (reply-prompt (assoc user :state "desc-words")))
 
       (= message btn-cancel) (case (:state user)
@@ -129,7 +134,6 @@
                                                     "lang-to" (users/set-lang-to user-id lang)
                                                     (do (c/log "UNKNOWN STATE" (:state user))
                                                         {:state :none}))]
-                                         (c/log "LANGUAGE" message lang)
                                          (reply-prompt user))
 
       true (handle-message (:state user) user-id message reply))))

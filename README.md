@@ -16,19 +16,22 @@ Word trainer Telegram bot in Clojure
 * Buttons: start exercise, my stats
 * Remove word
 * Select from-to languages
+* Fix show words if no words
+* Lowercase
+* Check word exists
 
 ## TODO
 
-* Fix show words if no words
-* Answer prompts for weak words
-* Check word exists
-* Lowercase
+* Exercise modes: buttons, translation, reverse translation
+* Interface localization
 * API call cache
+* Tests
+* Exercise if no weak words found
+* Weakening words: save updated date, weaken every 24h & send message
 
 ## Feature cut
 
 * Suggest normal form on adding word
-* Weakening words
 * Word tags
 
 ## Dictionaries
