@@ -25,7 +25,7 @@
   (def channel (p/start token bot-api {:timeout 65536}))
 
   ; TODO: make the Telegram thread non-background instead
-  (doall (repeatedly 1000 (fn [] (c/log "Sleeping") (Thread/sleep 60000))))
+  (doall (repeatedly 10000000 (fn [] (c/log "Sleeping") (Thread/sleep 60000))))
 
   (c/log "Bye"))
 
