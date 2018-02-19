@@ -22,6 +22,7 @@ Word trainer Telegram bot in Clojure
 
 ## TODO
 
+* Facebook
 * Exercise modes: buttons, translation, reverse translation
 * Interface localization
 * API call cache

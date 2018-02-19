@@ -1,4 +1,10 @@
-run:
+.PHONY:
+
+
+run: stop
+	docker-compose up -d app
+
+quick-run:
 	docker-compose run --rm app
 
 repl:
