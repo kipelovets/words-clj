@@ -96,7 +96,7 @@
                              (reply (:welcome tr) (buttons user))
                              (reply-prompt user))
 
-      (= message btn-help) (do (reply (users/desc-state user-id) (buttons {:id (:id user) :state "help"})))
+      (some #(= message %) ["/help" btn-help]) (do (reply (users/desc-state user-id) (buttons {:id (:id user) :state "help"})))
 
       (= message btn-show-words) (do (reply (if-let [words-list (not-empty (users/desc-words user-id))]
                                               words-list

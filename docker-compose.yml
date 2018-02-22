@@ -9,6 +9,21 @@ app:
   working_dir: /app
   command: lein run
 
+ring:
+  image: clojure
+  links:
+    - redis
+  volumes:
+    - ./:/app
+    - ~/.m2:/root/.m2
+  ports:
+    - "8080:8080"
+  expose:
+    - 8080
+  env_file: .env
+  working_dir: /app
+  command: lein ring server-headless 8080
+
 redis:
   image: redis
 
