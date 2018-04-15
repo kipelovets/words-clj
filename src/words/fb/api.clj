@@ -1,4 +1,4 @@
-(ns words.fb-api
+(ns words.fb.api
   (:gen-class)
   (:require [fb-messenger.auth :as fb]
             [environ.core :refer [env]]))

@@ -1,9 +1,9 @@
-(ns words.handler
+(ns words.fb.handler
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [environ.core :refer [env]]
-            [words.fb-api :as api]
-            [words.fb-bot :as bot]
+            [words.fb.api :as api]
+            [words.fb.bot :as bot]
             [fb-messenger.send :as send]
             [ring.middleware.defaults :refer :all]
             [ring.middleware.json :refer [wrap-json-params]]

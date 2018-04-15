@@ -1,12 +1,13 @@
 (ns words.storage.redis
   (:require [taoensso.carmine :as car :refer (wcar)]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.walk :as walk]))
 
 (def server1-conn {:pool {} :spec {:host "redis" :port 6379}})
 (defmacro wcar* [& body] `(car/wcar server1-conn ~@body))
 
 (defn- keyword-keys [u]
-  (not-empty (zipmap (map keyword (keys u)) (vals u))))
+  (not-empty (walk/keywordize-keys u)))
 
 (defn- format-key [& ids] (subs (str/join ":" ids) 1))
 

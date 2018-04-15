@@ -19,7 +19,7 @@
                                "phrase" word
                                "format" "json"}})
         body (json/read-str (:body resp))]
-    (prn "GLOSBE" word from to body)
+    ;(prn "GLOSBE" word from to body)
     (parse body)))
 
 

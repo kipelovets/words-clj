@@ -9,6 +9,8 @@
 (def state-remove-word "remove-word")
 (def state-lang-from "lang-from")
 (def state-lang-to "lang-to")
+(def state-select-lesson "select-lesson")
+(def state-lesson "lesson-step")
 
 (def max-strength 5)
 (def exercise-length 5)
@@ -30,6 +32,19 @@
     (redis/save :user id user)
     (redis/save-rel :user id :word word {:translation translation :strength 0})
     user))
+
+(defn lessons-select [id]
+  (storage/set-user id (assoc (storage/get-user id) :state state-select-lesson)))
+
+(defn lesson-start [id lesson]
+  (let [user (assoc (redis/fetch :user id) :state "lesson" :step 0 :lesson lesson)]
+    (redis/save :user id user)))
+
+(defn lesson-step [id]
+  (let [user (redis/fetch :user id)
+        step (inc (Integer. (:step user)))]
+    (redis/save :user id (assoc user :step step))
+    step))
 
 (defn- get-weak-words [id]
   (let [words (storage/get-words id)]

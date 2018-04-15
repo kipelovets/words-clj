@@ -4,19 +4,9 @@
             [words.dic.glosbe :as dic]
             [words.tr :refer :all]
             [words.storage :as storage]
-            [words.common :as c]))
-
-(def ^:private btn-en "🇺🇸 EN")
-(def ^:private btn-de "🇩🇪 DE")
-(def ^:private btn-ru "🇷🇺 RU")
-(def ^:private btn-pl "🇵🇱 PL")
-(def ^:private btn-show-words "📖 Show my words")
-(def ^:private btn-help "❓ Help")
-(def ^:private btn-exercise "📝 Start exercise")
-(def ^:private btn-remove "🙅‍♂️ Remove word")
-(def ^:private btn-cancel "🤚 Cancel")
-(def ^:private btn-stop "🤚 Stop exercise")
-(def ^:private btn-lang "⚙️ Change languages")
+            [words.common :as c]
+            [words.lessons :as lessons]
+            [words.state :refer :all]))
 
 (def ^:private btns-langs [btn-en btn-de btn-ru btn-pl])
 (def ^:private btn-to-lang {btn-en "en"
@@ -39,7 +29,7 @@
 
 (defn- buttons [user]
   (let [weak-words-count (users/count-weak-words (:id user))
-        default-buttons [btn-show-words btn-help]
+        default-buttons [btn-show-words btn-help btn-lessons]
         buttons (if (< 0 weak-words-count) (conj default-buttons btn-exercise) default-buttons)]
     (case (:state user)
       "word" buttons
@@ -53,12 +43,24 @@
       "lang-to" btns-langs
       buttons)))
 
-(defmulti handle-message (fn [state _ _ _] (or state :none)))
+(def reply-prompt (fn [reply u] (reply (prompt u) (buttons u))))
+
+(defn- handle-create-user [reply user-id]
+  (let [user (users/add-user user-id)]
+    (reply (:welcome tr) (buttons user))
+    (reply-prompt reply user)))
+
+(defmulti handle-message
+          (fn [state _ _ _]
+            (if (some #{state} '("word" "translation" "exercise" "remove-word"))
+              state
+              :none)
+            ))
 
 (defmethod handle-message :none [_ user-id message reply]
-  (reply "Oops, you're in unknown state"))
+  (handle-create-user reply user-id))
 
-(defmethod handle-message "word" [_ user-id message reply]
+(defmethod handle-message users/state-word [_ user-id message reply]
   (let [word (str/lower-case message)]
     (if (storage/get-word user-id word)
       (reply (str "Word '" word "' already exists, choose another"))
@@ -67,13 +69,13 @@
         (reply (prompt user translations)
                (buttons {:id (:id user) :state "translation" :translations translations}))))))
 
-(defmethod handle-message "translation" [_ user-id message reply]
+(defmethod handle-message users/state-translation [_ user-id message reply]
   (let [word (str/lower-case message)
         user (users/finish-adding-word user-id word)]
-    (reply (str "Translation saved " (:word user) " -> " word))
+    (reply (str "Translation saved: " (:word user) " -> " word))
     (reply (prompt user) (buttons {:state "translation-added" :id (:id user)}))))
 
-(defmethod handle-message "exercise" [_ user-id message reply]
+(defmethod handle-message users/state-exercise [_ user-id message reply]
   (let [[ok expected next-word points] (users/exercise-answer user-id message)]
     (let [user (storage/get-user user-id)
           next-prompt (if next-word
@@ -83,40 +85,45 @@
         (reply (str "Correct! " next-prompt) (buttons user))
         (reply (str "Incorrect! Correct answer was: " expected ". " next-prompt) (buttons user))))))
 
-(defmethod handle-message "remove-word" [_ user-id message reply]
+(defmethod handle-message users/state-remove-word [_ user-id message reply]
   (let [user (users/finish-removing-word user-id message)]
     (if user (reply (prompt user) (buttons user))
              (reply "Word not found, try again"))))
 
+(defmethod handle-message users/state-select-lesson [_ user-id message reply]
+  (lessons/lesson-start reply (users/get-user user-id) message))
+
+(defmethod handle-message users/state-lesson [_ user-id message reply]
+  (lessons/lesson-step reply (users/get-user user-id) message))
+
 (defn handle [user-id message reply]
-  (let [user (users/get-user user-id)
-        reply-prompt (fn [u] (reply (prompt u) (buttons u)))]
+  (let [user (users/get-user user-id)]
     (cond
-      (= message "/start") (let [user (users/add-user user-id)]
-                             (reply (:welcome tr) (buttons user))
-                             (reply-prompt user))
+      (= message "/start") (handle-create-user reply user-id)
 
       (some #(= message %) ["/help" btn-help]) (do (reply (users/desc-state user-id) (buttons {:id (:id user) :state "help"})))
 
       (= message btn-show-words) (do (reply (if-let [words-list (not-empty (users/desc-words user-id))]
                                               words-list
                                               "You have no words yet"))
-                         (reply-prompt (assoc user :state "desc-words")))
+                         (reply-prompt reply (assoc user :state "desc-words")))
 
       (= message btn-cancel) (case (:state user)
-                   "translation" (let [user (users/reset user-id)]
-                                   (reply-prompt user))
-                   "word" (let [user (users/start-adding-word user-id (:word user))]
-                            (reply-prompt user))
-                   "remove-word" (reply-prompt (users/reset user-id))
+                   users/state-translation (let [user (users/reset user-id)]
+                                   (reply-prompt reply user))
+                   users/state-word (let [user (users/start-adding-word user-id (:word user))]
+                            (reply-prompt reply user))
+                   users/state-remove-word (reply-prompt reply (users/reset user-id))
+                   users/state-select-lesson (reply-prompt reply (users/reset user-id))
+                   users/state-lesson (reply-prompt reply (users/reset user-id))
                    (reply "Nothing to cancel"))
 
       (= message btn-remove) (let [user (users/start-removing-word user-id)]
-                   (reply (prompt user) (buttons user)))
+                   (reply-prompt reply user))
 
       (= message btn-stop) (let [user (users/stop-exercise user-id)]
                  (reply "Exercise cancelled")
-                 (reply (prompt user) (buttons user)))
+                 (reply-prompt reply user))
 
       (= message btn-exercise) (let [exercise (users/start-exercise user-id)
                          first-word (first exercise)]
@@ -126,7 +133,9 @@
                          (buttons user))
                        (reply "Too few words to start exercise, add more")))
 
-      (= message btn-lang) (reply-prompt (users/reset-langs user-id))
+      (= message btn-lessons) (words.lessons/lessons-select reply user)
+
+      (= message btn-lang) (reply-prompt reply (users/reset-langs user-id))
 
       (some #(= message %) btns-langs) (let [lang (get btn-to-lang message)
                                              user (case (:state user)
@@ -134,7 +143,7 @@
                                                     "lang-to" (users/set-lang-to user-id lang)
                                                     (do (c/log "UNKNOWN STATE" (:state user))
                                                         {:state :none}))]
-                                         (reply-prompt user))
+                                         (reply-prompt reply user))
 
       true (handle-message (:state user) user-id message reply))))
 

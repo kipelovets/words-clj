@@ -1,8 +1,8 @@
-(ns words.fb-bot
+(ns words.fb.bot
   (:gen-class)
   (:require [clojure.string :as s]
             [environ.core :refer [env]]
-            [words.fb-messages :as msg]
+            [words.fb.messages :as msg]
             [words.controller :as controller]))
 
 (defn- handle

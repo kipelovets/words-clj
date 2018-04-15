@@ -1,7 +1,8 @@
 (ns words.users-test
   (:require [clojure.test :refer :all]
             [words.users :refer :all]
-            [words.storage :as storage]))
+            [words.storage :as storage]
+            [words.storage.redis :as redis]))
 
 (def words {
             "pies"   "dog"
@@ -12,8 +13,8 @@
             "koza"   "goat"
             })
 
-(storage/select-db 15)
-(storage/clear-all)
+(redis/select-db 15)
+(redis/clear-all)
 
 (defn prepare-user []
   (add-user 1)
@@ -48,5 +49,5 @@
     (is (= "word" (:state (storage/get-user 1)))))
 
   (doall (map (fn [w]
-                (is (= 1 (:strength (get (storage/get-words 1) w))))) ex))
+                (is (= "1" (:strength (get (storage/get-words 1) w))))) ex))
   )

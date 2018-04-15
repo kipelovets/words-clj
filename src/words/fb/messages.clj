@@ -1,4 +1,4 @@
-(ns words.fb-messages
+(ns words.fb.messages
   (:gen-class)
   (:require [fb-messenger.send :as send]
             [fb-messenger.templates :as templates]

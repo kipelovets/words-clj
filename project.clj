@@ -20,8 +20,8 @@
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]]
-  :ring {:init words.handler/init
-         :handler words.handler/app}
+  :ring {:init words.fb.handler/init
+         :handler words.fb.handler/app}
 
   :main ^:skip-aot words.core
   :target-path "target/%s"
