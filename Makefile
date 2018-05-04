@@ -23,3 +23,7 @@ stop:
 ring:
 	docker-compose rm -f ring
 	docker-compose up ring
+
+telegram: run
+
+facebook: ring

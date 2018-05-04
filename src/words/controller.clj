@@ -52,7 +52,7 @@
 
 (defmulti handle-message
           (fn [state _ _ _]
-            (if (some #{state} '("word" "translation" "exercise" "remove-word"))
+            (if (some #{state} '("word" "translation" "exercise" "remove-word" "select-lesson" "lesson"))
               state
               :none)
             ))

@@ -12,16 +12,20 @@
                  [slingshot "0.12.2"]
                  [fb-messenger "0.4.0"]
 
-                 [compojure "1.5.1"]
+                 [compojure "1.5.2"]
                  [http-kit "2.2.0"]
-                 [ring/ring-defaults "0.2.1"]
                  [ring/ring-json "0.4.0"]
+
+                 [ring/ring-core "1.5.0"]
+                 [ring/ring-defaults "0.2.3"]
+                 [ring/ring-jetty-adapter "1.5.0"]
 
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]]
-  :ring {:init words.fb.handler/init
-         :handler words.fb.handler/app}
+
+  :ring {:init words.ring-core/init
+         :handler words.ring-core/app}
 
   :main ^:skip-aot words.core
   :target-path "target/%s"

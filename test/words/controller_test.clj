@@ -8,6 +8,9 @@
             [clojure.string :as str]
             [words.users :as users]))
 
+(redis/select-db 15)
+(redis/clear-all)
+
 (defn expect-in [needle haystack]
   (is (some #{needle} haystack)
       (str "Expecting '" needle "' in '" (str/join haystack) "'")))
@@ -30,26 +33,38 @@
   ([expected-replies expected-buttons]
    (fn
      ([prompt buttons]
+      (println "Received reply: " prompt)
       (expect-in prompt expected-replies)
       (expect-intersect expected-buttons buttons))
      ([prompt]
+      (println "Received reply: " prompt)
       (expect-in prompt expected-replies))))
   )
 
 (defn expect-state [state]
-  (is (= state (:state (storage/get-user 1)))))
+  (println "Expecting state " state)
+  (is (= state (:state (storage/get-user 1))))
+  )
+
+(defn any-replies
+  ([prompt] (doall (println "REPLY " prompt)))
+  ([prompt buttons] (doall (println "REPLY " prompt " BUTTONS " buttons))))
 
 (defn send
   ([message]
-    (controller/handle 1 message (constantly nil)))
+   (println "Sending message: " message)
+    (controller/handle 1 message println))
   ([message expected-replies expected-buttons expected-state]
+   (println "Sending message (expecting replies): " message)
    (controller/handle 1 message
                       (expect-replies expected-replies expected-buttons))
    (expect-state expected-state)))
 
 (deftest test-controller
   (testing "default state"
-    (add-user 1)
+    (println (add-user 1))
+    (words.lessons/prepare-debug-lessons)
+
     (send "/start"
           '["Welcome! Start building your dictionary by adding words with translations"
             "Select your native language"]
@@ -70,31 +85,42 @@
           '["Possible translations: dog, hound, pig, Canis familiaris, bull\nNow send your selected translation"]
           []
           "translation")
-(println "0")
 
     (send "dog"
-          '["Translation saved: pies -> dog"]
+          '["Translation saved: pies -> dog" "Send a new word to train"]
           [state/btn-lessons]
           "word")
-(println "1")
 
     (send state/btn-lessons
-          '["Lessons"]
+          '["Available lessons:\nCelownik"]
           ["Celownik"]
           users/state-select-lesson)
-(println "2")
+
+    (send "WRONG LESSON"
+          '["Please select a lesson"]
+          ["Celownik"]
+          users/state-select-lesson)
 
     (send "Celownik"
           '["Welcome to celownik" "Celownik is a Polish version of Dative case"]
           ["Continue"]
           users/state-lesson)
-(println "3")
 
-    (for [[_ repl expected] (words.lessons/get-lesson "pl" "Celownik")]
-      (send (if (= :expect repl) expected repl)))
-(println "4")
+    (let [steps (:steps (words.lessons/get-lesson "pl" "Celownik"))]
+      ;(println "Going through lesson: " (clojure.data.json/write-str steps))
+      (doseq [[prompt reply expected] steps]
+        (do
+
+          (if (not (= :finish reply))
+            (do
+              (send (if (= :expect reply) expected reply))
+              (println "Sending lesson answer " prompt reply expected))
+            (println "Lesson finished"))
+
+          )
+        )
+      )
 
     (expect-state users/state-word)
-(println "5")
 
     ))

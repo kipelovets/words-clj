@@ -22,13 +22,19 @@ Word trainer Telegram bot in Clojure
 
 ## TODO
 
-* Facebook
 * Exercise modes: buttons, translation, reverse translation
 * Interface localization
 * API call cache
 * Tests
 * Exercise if no weak words found
 * Weakening words: save updated date, weaken every 24h & send message
+
+### Admin
+
+* Lessons saving & loading
+* List of lessons
+* Lesson steps list
+* Add/edit step
 
 ## Feature cut
 

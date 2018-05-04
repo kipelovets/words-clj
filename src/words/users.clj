@@ -10,7 +10,7 @@
 (def state-lang-from "lang-from")
 (def state-lang-to "lang-to")
 (def state-select-lesson "select-lesson")
-(def state-lesson "lesson-step")
+(def state-lesson "lesson")
 
 (def max-strength 5)
 (def exercise-length 5)
@@ -22,12 +22,15 @@
 (defn get-user [id]
   (storage/get-user id))
 
+(defn set-state [id state]
+  (storage/set-user id (assoc (get-user id) :state state)))
+
 (defn start-adding-word [id, word]
-  (let [user (assoc (get-user id) :state "translation" :word word)]
+  (let [user (assoc (get-user id) :state state-translation :word word)]
     (storage/set-user id user)))
 
 (defn finish-adding-word [id, translation]
-  (let [user (assoc (redis/fetch :user id) :state "word")
+  (let [user (assoc (redis/fetch :user id) :state state-word)
         word (:word user)]
     (redis/save :user id user)
     (redis/save-rel :user id :word word {:translation translation :strength 0})
@@ -37,7 +40,7 @@
   (storage/set-user id (assoc (storage/get-user id) :state state-select-lesson)))
 
 (defn lesson-start [id lesson]
-  (let [user (assoc (redis/fetch :user id) :state "lesson" :step 0 :lesson lesson)]
+  (let [user (assoc (redis/fetch :user id) :state state-lesson :step 0 :lesson lesson)]
     (redis/save :user id user)))
 
 (defn lesson-step [id]
@@ -57,7 +60,7 @@
 (defn start-exercise [id]
   (let [exercise-words (generate-exercise id)]
     (if (< 0 (count exercise-words))
-      (storage/set-user id {:exercise exercise-words :state "exercise" :points 0}))
+      (storage/set-user id {:exercise exercise-words :state state-exercise :points 0}))
     exercise-words))
 
 (defn exercise-answer [id, word]
@@ -69,7 +72,7 @@
         points (Integer. (:points user))]
     (storage/set-user id {:exercise exercise-rest})
     (if (empty? exercise-rest)
-      (storage/set-user id {:state "word"}))
+      (storage/set-user id {:state state-word}))
     (if (= expected word)
       (do
         (storage/set-user id {:points points})
@@ -107,18 +110,18 @@
       (str "Unknown state: " state))))
 
 (defn reset [id]
-  (storage/set-user id {:state "word"}))
+  (storage/set-user id {:state state-word}))
 
 (defn stop-exercise [id]
   (reset id))
 
 (defn start-removing-word [id]
-  (storage/set-user id {:state "remove-word"}))
+  (storage/set-user id {:state state-remove-word}))
 
 (defn finish-removing-word [id word]
   (let [word-params (storage/get-word id word)]
     (if word-params (do (storage/remove-word id word)
-                        (storage/set-user id {:state "word"}))
+                        (storage/set-user id {:state state-word}))
                     nil)))
 
 (defn set-lang-from [id lang]
