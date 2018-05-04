@@ -23,10 +23,17 @@
 (defn get-lesson-names [language]
   (redis/list-rel :language language :lessons))
 
-(defn- lessons-buttons [lessons] (conj lessons state/btn-cancel))
-
 (defn get-lesson [language lesson]
-  (redis/fetch-rel :language language :lessons lesson))
+  (assoc (redis/fetch-rel :language language :lessons lesson) :id lesson :name lesson))
+
+(defn get-lessons [language]
+  (let [lessons (get-lesson-names language)]
+    (map (fn [name] (assoc (get-lesson language name) :name name :id name)) lessons)))
+
+(defn remove-lesson [language id]
+  (redis/remove-rel :language language :lessons id))
+
+(defn- lessons-buttons [lessons] (conj lessons state/btn-cancel))
 
 (defn save-lesson [language id data]
   (redis/save-rel :language language :lessons id data))

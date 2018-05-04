@@ -8,9 +8,6 @@
             [clojure.string :as str]
             [words.users :as users]))
 
-(redis/select-db 15)
-(redis/clear-all)
-
 (defn expect-in [needle haystack]
   (is (some #{needle} haystack)
       (str "Expecting '" needle "' in '" (str/join haystack) "'")))
@@ -62,6 +59,9 @@
 
 (deftest test-controller
   (testing "default state"
+    (redis/select-db 15)
+    (redis/clear-all)
+
     (println (add-user 1))
     (words.lessons/prepare-debug-lessons)
 
