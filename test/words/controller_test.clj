@@ -8,6 +8,17 @@
             [clojure.string :as str]
             [words.users :as users]))
 
+(def ^:dynamic *verbose* false)
+
+(defmacro dbg-println
+  [& args]
+  `(when *verbose*
+     (println ~@args)))
+
+(defmacro with-verbose
+  [& body]
+  `(binding [*verbose* true] ~@body))
+
 (defn expect-in [needle haystack]
   (is (some #{needle} haystack)
       (str "Expecting '" needle "' in '" (str/join haystack) "'")))
@@ -30,41 +41,44 @@
   ([expected-replies expected-buttons]
    (fn
      ([prompt buttons]
-      (println "Received reply: " prompt)
+      (dbg-println "Received reply: " prompt)
       (expect-in prompt expected-replies)
       (expect-intersect expected-buttons buttons))
      ([prompt]
-      (println "Received reply: " prompt)
+      (dbg-println "Received reply: " prompt)
       (expect-in prompt expected-replies))))
   )
 
 (defn expect-state [state]
-  (println "Expecting state " state)
+  (dbg-println "Expecting state " state)
   (is (= state (:state (storage/get-user 1))))
   )
 
 (defn any-replies
-  ([prompt] (doall (println "REPLY " prompt)))
-  ([prompt buttons] (doall (println "REPLY " prompt " BUTTONS " buttons))))
+  ([prompt] (doall (dbg-println "REPLY " prompt)))
+  ([prompt buttons] (doall (dbg-println "REPLY " prompt " BUTTONS " buttons))))
 
 (defn send
   ([message]
-   (println "Sending message: " message)
-    (controller/handle 1 message println))
+   (dbg-println "Sending message: " message)
+    (controller/handle 1 message (fn [& args] (dbg-println args))))
   ([message expected-replies expected-buttons expected-state]
-   (println "Sending message (expecting replies): " message)
+   (dbg-println "Sending message (expecting replies): " message)
    (controller/handle 1 message
                       (expect-replies expected-replies expected-buttons))
    (expect-state expected-state)))
 
+(use-fixtures :each
+              (fn [f]
+                (redis/select-db 15)
+                (redis/clear-all)
+                (words.lessons/prepare-debug-lessons)
+                (dbg-println "PREPARING")
+                (f)
+                ))
+
 (deftest test-controller
-  (testing "default state"
-    (redis/select-db 15)
-    (redis/clear-all)
-
-    (println (add-user 1))
-    (words.lessons/prepare-debug-lessons)
-
+  (testing "adding user"
     (send "/start"
           '["Welcome! Start building your dictionary by adding words with translations"
             "Select your native language"]
@@ -80,17 +94,44 @@
           '["Send a new word to train"]
           [state/btn-lessons]
           "word")
+    )
 
-    (send "pies"
-          '["Possible translations: dog, hound, pig, Canis familiaris, bull\nNow send your selected translation"]
+  (testing "adding words"
+    (set-state 1 "word")
+    (send "kaczka"
+          '["Possible translations: duck, canard, urine bottle, ducks, quack-quack\nNow send your selected translation"]
           []
           "translation")
 
-    (send "dog"
-          '["Translation saved: pies -> dog" "Send a new word to train"]
+    (send "duck"
+          '["Translation saved: kaczka -> duck" "Send a new word to train"]
           [state/btn-lessons]
           "word")
+    (doall (map-indexed (fn [word trans] (send word) (send trans)) {
+            "pies"   "dog"
+            "kot"    "cat"
+            "koń"    "horse"
+            "krowa"  "cow"
+            "świnia" "pig"
+            "koza"   "goat"
+            }))
+    (expect-state "word")
 
+    (is (= 7 (count (storage/get-words 1))))
+    )
+
+  (testing "cancel selecting lesson"
+    (send state/btn-lessons
+          '["Available lessons:\nCelownik"]
+          ["Celownik"]
+          users/state-select-lesson)
+    (send state/btn-cancel
+          '["Send a new word to train"]
+          [state/btn-show-words]
+          users/state-word)
+    )
+
+  (testing "lessons"
     (send state/btn-lessons
           '["Available lessons:\nCelownik"]
           ["Celownik"]
@@ -107,15 +148,15 @@
           users/state-lesson)
 
     (let [steps (:steps (words.lessons/get-lesson "pl" "Celownik"))]
-      ;(println "Going through lesson: " (clojure.data.json/write-str steps))
+      ;(dbg-println "Going through lesson: " (clojure.data.json/write-str steps))
       (doseq [[prompt reply expected] steps]
         (do
 
           (if (not (= :finish reply))
             (do
               (send (if (= :expect reply) expected reply))
-              (println "Sending lesson answer " prompt reply expected))
-            (println "Lesson finished"))
+              (dbg-println "Sending lesson answer " prompt reply expected))
+            (dbg-println "Lesson finished"))
 
           )
         )

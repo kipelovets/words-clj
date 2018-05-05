@@ -21,6 +21,8 @@
                  [ring/ring-jetty-adapter "1.5.0"]
                  [ring-cors "0.1.12"]
                  [ring/ring-devel "1.6.3"]
+
+                 [org.clojure/tools.trace "0.7.9"]
                  ]
   :plugins [[lein-ring "0.9.7"]
             [lein-environ "1.1.0"]]

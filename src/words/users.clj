@@ -107,7 +107,9 @@
       state-lang-from "You're selecting your native language"
       state-lang-to "You're selecting the language you're learning"
       state-remove-word "You're removing a word"
-      (str "Unknown state: " state))))
+      state-select-lesson "You're selecting an exercise"
+      state-lesson "You're in the middle of a lesson"
+      (str "Don't know how to describe your state: " state))))
 
 (defn reset [id]
   (storage/set-user id {:state state-word}))

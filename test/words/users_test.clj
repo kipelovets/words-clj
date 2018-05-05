@@ -13,8 +13,6 @@
             "koza"   "goat"
             })
 
-(redis/select-db 15)
-(redis/clear-all)
 
 (defn prepare-user []
   (add-user 1)
@@ -24,14 +22,19 @@
                   (finish-adding-word 1 translation)))
               words)))
 
-(deftest test-add-word
+(use-fixtures :each
+              (fn [f]
+                (redis/select-db 15)
+                (redis/clear-all)
+                (f)
+                ))
+
+(deftest test-users
+
   (testing "Words"
-
     (prepare-user)
+    (is (= 6 (count (storage/get-words 1)))))
 
-    (is (= 6 (count (storage/get-words 1))))))
-
-(deftest test-exercise
   (testing "Gen exercise"
 
     (prepare-user)
@@ -46,8 +49,10 @@
         (recur (rest w))))
 
     (is (= 0 (count (:exercise (storage/get-user 1)))))
-    (is (= "word" (:state (storage/get-user 1)))))
+    (is (= "word" (:state (storage/get-user 1))))
 
-  (doall (map (fn [w]
-                (is (= "1" (:strength (get (storage/get-words 1) w))))) ex))
+    (doall (map (fn [w]
+                  (is (= "1" (:strength (get (storage/get-words 1) w))))) ex))
+
+    )
   )

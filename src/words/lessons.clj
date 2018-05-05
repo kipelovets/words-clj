@@ -40,8 +40,12 @@
 
 (defn lessons-select [reply user]
   (let [lessons (get-lesson-names (:lang-to user))]
-    (users/lessons-select (:id user))
-    (reply (str "Available lessons:\n" (string/join "\n" lessons)) (lessons-buttons lessons))))
+    (if (> (count lessons) 0)
+      (do
+        (users/lessons-select (:id user))
+        (reply (str "Available lessons:\n" (string/join "\n" lessons)) (lessons-buttons lessons)))
+      (reply "No available lessons"))
+    ))
 
 (defn- send-lesson-step [reply step]
   (let [resp (get step 1)

@@ -97,7 +97,8 @@
   (lessons/lesson-step reply (users/get-user user-id) message))
 
 (defn handle [user-id message reply]
-  (let [user (users/get-user user-id)]
+  (let [user (users/get-user user-id)
+        state (:state user)]
     (cond
       (= message "/start") (handle-create-user reply user-id)
 
@@ -108,7 +109,7 @@
                                               "You have no words yet"))
                          (reply-prompt reply (assoc user :state "desc-words")))
 
-      (= message btn-cancel) (case (:state user)
+      (= message btn-cancel) (condp = state
                    users/state-translation (let [user (users/reset user-id)]
                                    (reply-prompt reply user))
                    users/state-word (let [user (users/start-adding-word user-id (:word user))]
@@ -116,7 +117,7 @@
                    users/state-remove-word (reply-prompt reply (users/reset user-id))
                    users/state-select-lesson (reply-prompt reply (users/reset user-id))
                    users/state-lesson (reply-prompt reply (users/reset user-id))
-                   (reply "Nothing to cancel"))
+                   (reply (str "Nothing to cancel in state " state)))
 
       (= message btn-remove) (let [user (users/start-removing-word user-id)]
                    (reply-prompt reply user))
