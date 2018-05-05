@@ -18,12 +18,12 @@ ring:
     - ./:/app
     - ~/.m2:/root/.m2
   ports:
-    - "8080:8080"
+    - "5000:5000"
   expose:
-    - 8080
+    - 5000
   env_file: .env
   working_dir: /app
-  command: lein ring server-headless 8080
+  command: lein ring server-headless 5000
 
 redis:
   image: redis
