@@ -1,6 +1,5 @@
 .PHONY:
 
-
 run: stop
 	docker-compose up -d app
 

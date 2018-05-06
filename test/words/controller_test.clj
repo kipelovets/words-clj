@@ -149,18 +149,8 @@
 
     (let [steps (:steps (words.lessons/get-lesson "pl" "Celownik"))]
       ;(dbg-println "Going through lesson: " (clojure.data.json/write-str steps))
-      (doseq [[prompt reply expected] steps]
-        (do
-
-          (if (not (= :finish reply))
-            (do
-              (send (if (= :expect reply) expected reply))
-              (dbg-println "Sending lesson answer " prompt reply expected))
-            (dbg-println "Lesson finished"))
-
-          )
-        )
-      )
+      (doseq [[prompt buttons expected] steps]
+        (if (= "" expected) nil (send expected))))
 
     (expect-state users/state-word)
 

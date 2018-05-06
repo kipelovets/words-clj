@@ -17,20 +17,31 @@
             [ring.middleware.reload :refer [wrap-reload]]))
 
 (defn- lesson-to-api [lesson]
-  (assoc lesson :steps (map-indexed (fn [index [prompt expect answer]]
+  (defn list-text [arr] (map-indexed (fn [ind text] {:key ind :text text}) arr))
+  (assoc lesson :steps (map-indexed (fn [index [prompt buttons answer]]
                               {:key index
-                               :prompt (map-indexed (fn [ind text] {:key ind :text text}) prompt)
-                               :answer (if (= :expect expect) answer expect)
-                               :button (if (= :expect expect) nil expect)})
+                               :prompt (list-text prompt)
+                               :answer answer
+                               :buttons (list-text buttons)})
                             (:steps lesson))
-                ))
+                :id (:name lesson)))
+
+(defn- keyword-keys [u]
+  (zipmap (map keyword (keys u)) (vals u)))
 
 (defn- api-to-lesson [data]
-  (assoc data :steps (map (fn [{prompt :prompt expect :expect button :button}]
-                            [(map (fn [{text :text}] text) prompt)
-                             (if button button :expect)
-                             expect])
-                          (:steps data))))
+  (defn text-list [arr] (map (fn [row]
+                               (let [text (get row "text")] text))
+                             arr))
+  (assoc data :steps (map (fn [step]
+                            (let [stepKw (keyword-keys step)
+                                  {prompt :prompt buttons :buttons answer :answer} stepKw]
+                              [(text-list prompt)
+                               (text-list buttons)
+                               answer]))
+                          (get data "steps"))
+              :id (get data "name")
+              :name (get data "name")))
 
 (defroutes app-routes
            ;(GET "/" [] "Hello World")
@@ -51,16 +62,18 @@
            (GET "/lessons/:id" [id] (json/write-str (lesson-to-api (lessons/get-lesson "pl" id))))
 
            (PUT "/lessons/:id" [id :as request]
-             (json/write-str
-               (lesson-to-api
-                 (lessons/save-lesson "pl" id (api-to-lesson (:json-params request))))))
-
-           (POST "/lessons" request
-             (let [params (api-to-lesson (:json-params request))]
-               (println request)
+             (let [req (:json-params request)
+                   params (api-to-lesson req)]
                (json/write-str
                  (lesson-to-api
-                   (lessons/save-lesson "pl" (get params "id") params)))))
+                   (lessons/save-lesson "pl" id (api-to-lesson params))))))
+
+           (POST "/lessons" request
+             (let [req (:json-params request)
+                   params (api-to-lesson req)]
+               (json/write-str
+                 (lesson-to-api
+                   (lessons/save-lesson "pl" (get params "name") params)))))
 
            (DELETE "/lessons/:id" [id :as request]
              (do
