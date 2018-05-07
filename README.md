@@ -19,22 +19,22 @@ Word trainer Telegram bot in Clojure
 * Fix show words if no words
 * Lowercase
 * Check word exists
+* Lessons
+* Tests
+* API for admin panel
 
 ## TODO
 
 * Exercise modes: buttons, translation, reverse translation
 * Interface localization
 * API call cache
-* Tests
+* REST API tests
 * Exercise if no weak words found
 * Weakening words: save updated date, weaken every 24h & send message
-
-### Admin
-
-* Lessons saving & loading
-* List of lessons
-* Lesson steps list
-* Add/edit step
+* Lessons renaming via API
+* No required answers for lessons
+* Don't send "Correct" every time
+* Facebook fails if no replies
 
 ## Feature cut
 

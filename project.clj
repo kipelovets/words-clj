@@ -30,6 +30,8 @@
   :ring {:init words.ring-core/init
          :handler words.ring-core/app}
 
-  :main ^:skip-aot words.core
+  :main words.core
+  :aot :all
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :facebook {:main words.ring-core :aot :all}})

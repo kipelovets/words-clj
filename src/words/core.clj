@@ -4,11 +4,10 @@
             [morse.polling :as p]
             [words.common :as c]
             [words.controller :as controller])
-  (:use [environ.core]))
+  (:use [environ.core])
+  (:gen-class))
 
 (def token (env :telegram-token))
-
-(c/log (str "Telegram token: " token))
 
 (h/defhandler bot-api
               (h/message {{id :id :as chat} :chat text :text :as message}

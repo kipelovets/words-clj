@@ -14,7 +14,9 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [clojure.data.json :as json]
             [words.lessons :as lessons]
-            [ring.middleware.reload :refer [wrap-reload]]))
+            [ring.middleware.reload :refer [wrap-reload]]
+            [ring.adapter.jetty :refer [run-jetty]])
+  (:gen-class))
 
 (defn- lesson-to-api [lesson]
   (defn list-text [arr] (map-indexed (fn [ind text] {:key ind :text text}) arr))
@@ -109,3 +111,7 @@
   (send/set-messenger-profile {
                                :greeting    [{:locale "default" :text "Hello"}]
                                :get_started {:payload "/start"}} page-access-token))
+
+(defn -main []
+  (init)
+  (run-jetty app {:port (Integer/valueOf (or (System/getenv "port") "5000"))}))
