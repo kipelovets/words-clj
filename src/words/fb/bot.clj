@@ -13,7 +13,9 @@
                  (msg/send-message sender-id reply-text))
                 ([reply-text buttons]
                  (println "REPLY BUTTONS " reply-text buttons)
-                 (msg/send-quick-reply sender-id reply-text buttons)))]
+                 (if (seq buttons)
+                   (msg/send-quick-reply sender-id reply-text buttons)
+                   (msg/send-message sender-id reply-text))))]
     (controller/handle sender-id message-text reply)))
 
 (defn on-message [payload]
