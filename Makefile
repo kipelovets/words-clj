@@ -31,6 +31,16 @@ build-image:
 	docker build docker/ring -t kipelovets/words-ring
 	docker push kipelovets/words-ring
 
+# Remote docker
+
+deploy:
+	docker stack deploy -c docker-swarm.yml words
+
+update-image:
+	docker service update --image kipelovets/words-ring words_ring
+
+# Shortcuts
+
 telegram: run
 
 facebook: ring

@@ -1,0 +1,18 @@
+version: '3'
+services:
+    redis:
+        image: redis
+        volumes:
+            - redis-data:/data
+    ring:
+        image: kipelovets/words-ring
+        ports:
+            - "5000:5000"
+        expose:
+            - 5000
+        env_file: .env
+        volumes:
+            - ring-public:/app/public
+volumes:
+    redis-data:
+    ring-public:

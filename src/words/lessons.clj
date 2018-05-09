@@ -59,6 +59,7 @@
         step (get (:steps lesson) 0)]
     (if (some #{lesson-name} lessons)
       (do
+        (println "Lesson selected " language lesson step)
         (send-lesson-step reply step)
         (users/lesson-start (:id user) lesson-name)
         )

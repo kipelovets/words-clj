@@ -22,6 +22,7 @@ Word trainer Telegram bot in Clojure
 * Lessons
 * Tests
 * API for admin panel
+* Facebook fails if no replies
 
 ## TODO
 
@@ -34,7 +35,10 @@ Word trainer Telegram bot in Clojure
 * Lessons renaming via API
 * No required answers for lessons
 * Don't send "Correct" every time
-* Facebook fails if no replies
+* Cancel during the lesson
+* Buttons after lesson finished
+* Empty translations list
+* /reset
 
 ## Feature cut
 
