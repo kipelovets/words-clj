@@ -13,6 +13,9 @@ services:
         env_file: .env
         volumes:
             - ring-public:/app/public
+    telegram:
+        image: kipelovets/words-telegram
+        env_file: .env
 volumes:
     redis-data:
     ring-public:

@@ -104,10 +104,12 @@
 
       (some #(= message %) ["/help" btn-help]) (do (reply (users/desc-state user-id) (buttons {:id (:id user) :state "help"})))
 
-      (= message btn-show-words) (do (reply (if-let [words-list (not-empty (users/desc-words user-id))]
-                                              words-list
-                                              "You have no words yet"))
-                         (reply-prompt reply (assoc user :state "desc-words")))
+      (= message btn-show-words) (do 
+                                   (reply (if-let 
+                                            [words-list (not-empty (users/desc-words user-id))]
+                                            words-list
+                                            "You have no words yet"))
+                                   (reply-prompt reply (assoc user :state "desc-words")))
 
       (= message btn-cancel) (condp = state
                    users/state-translation (let [user (users/reset user-id)]

@@ -23,13 +23,21 @@ ring:
 	docker-compose rm -f ring
 	docker-compose up -d ring
 
-build:
+build-ring:
 	docker-compose run --rm app lein with-profile facebook uberjar
 
-build-image:
+build-telegram:
+	docker-compose run --rm app lein uberjar
+
+build-image-ring:
 	cp target/uberjar/words-0.1.0-SNAPSHOT-standalone.jar docker/ring/
 	docker build docker/ring -t kipelovets/words-ring
 	docker push kipelovets/words-ring
+
+build-image-telegram:
+	cp target/uberjar/words-0.1.0-SNAPSHOT-standalone.jar docker/telegram/
+	docker build docker/telegram -t kipelovets/words-telegram
+	docker push kipelovets/words-telegram
 
 # Remote docker
 
